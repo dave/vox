@@ -79,6 +79,38 @@ vox                       # run in the foreground; logs go to stderr
 vox -transcribe file.wav  # run the provider chain on a file (no hotkey needed)
 ```
 
+## Run at login (LaunchAgent)
+
+```sh
+make agent      # installs, then loads ~/Library/LaunchAgents/com.dave.vox.plist
+make restart    # restart it (e.g. after granting a permission)
+make unagent    # stop it and remove the agent
+tail -f ~/Library/Logs/vox.log
+```
+
+launchd restarts vox if it exits. Re-running `make agent` after a `git pull`
+rebuilds, reinstalls and reloads it.
+
+**Permissions work differently here.** In a terminal, vox uses the terminal's
+permissions. Under launchd it has to be granted them itself:
+
+1. After `make agent`, macOS should prompt for Input Monitoring and
+   Accessibility. Grant both. If no prompt appears, open **System Settings →
+   Privacy & Security**, go to each of those panes, click **+**, press
+   Cmd-Shift-G and enter `~/.local/bin/vox`.
+2. Run `make restart`, because the event tap is only created at startup.
+3. Hold Fn once to trigger the Microphone prompt, and allow it.
+4. Check `~/Library/Logs/vox.log`. It shouldn't contain any "needs … permission" lines.
+
+Each rebuild gets a new ad-hoc signature, so after `make agent` macOS may treat
+vox as a new app. If dictation stops working, remove `vox` from those panes
+and grant it again.
+
+**API keys:** launchd doesn't read your shell profile, so `GROQ_API_KEY` and
+the other environment variables you set there aren't visible to it. Use the
+keychain entries described above, or add an `EnvironmentVariables` block to
+the installed plist (there's a commented-out one in it).
+
 ## Configuration
 
 Config is optional. Vox reads `~/.config/vox/config.yaml`, or the path in
