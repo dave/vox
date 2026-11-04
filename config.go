@@ -138,7 +138,10 @@ func (c Config) applyReplacements(s string) string {
 			logf("bad replacement %q: %v", r.From, err)
 			continue
 		}
-		s = re.ReplaceAllLiteralString(s, r.To)
+		if re.MatchString(s) {
+			logf("replaced %q → %q", r.From, r.To)
+			s = re.ReplaceAllLiteralString(s, r.To)
+		}
 	}
 	return s
 }
