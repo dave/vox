@@ -7,36 +7,36 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/BurntSushi/toml"
+	"gopkg.in/yaml.v3"
 )
 
 type Provider struct {
-	Type    string `toml:"type"` // "groq" or "deepgram"
-	Model   string `toml:"model"`
-	Timeout int    `toml:"timeout_seconds"`
+	Type    string `yaml:"type"` // "groq" or "deepgram"
+	Model   string `yaml:"model"`
+	Timeout int    `yaml:"timeout_seconds"`
 }
 
 type Replacement struct {
-	From          string `toml:"from"`
-	To            string `toml:"to"`
-	CaseSensitive bool   `toml:"case_sensitive"`
+	From          string `yaml:"from"`
+	To            string `yaml:"to"`
+	CaseSensitive bool   `yaml:"case_sensitive"`
 }
 
 type Config struct {
-	Language         string        `toml:"language"`
-	MinHoldMs        int           `toml:"min_hold_ms"`
-	TailMs           int           `toml:"tail_ms"`
-	WarnSeconds      int           `toml:"warn_seconds"`
-	MaxSeconds       int           `toml:"max_seconds"`
-	RestoreClipboard bool          `toml:"restore_clipboard"`
-	StartSound       string        `toml:"start_sound"`
-	StopSound        string        `toml:"stop_sound"`
-	WarnSound        string        `toml:"warn_sound"`
-	ErrorSound       string        `toml:"error_sound"`
-	PromptMaxChars   int           `toml:"prompt_max_chars"`
-	Providers        []Provider    `toml:"providers"`
-	Terms            []string      `toml:"terms"`
-	Replacements     []Replacement `toml:"replacements"`
+	Language         string        `yaml:"language"`
+	MinHoldMs        int           `yaml:"min_hold_ms"`
+	TailMs           int           `yaml:"tail_ms"`
+	WarnSeconds      int           `yaml:"warn_seconds"`
+	MaxSeconds       int           `yaml:"max_seconds"`
+	RestoreClipboard bool          `yaml:"restore_clipboard"`
+	StartSound       string        `yaml:"start_sound"`
+	StopSound        string        `yaml:"stop_sound"`
+	WarnSound        string        `yaml:"warn_sound"`
+	ErrorSound       string        `yaml:"error_sound"`
+	PromptMaxChars   int           `yaml:"prompt_max_chars"`
+	Providers        []Provider    `yaml:"providers"`
+	Terms            []string      `yaml:"terms"`
+	Replacements     []Replacement `yaml:"replacements"`
 }
 
 func configPath() string {
@@ -44,7 +44,7 @@ func configPath() string {
 		return p
 	}
 	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".config", "vox", "config.toml")
+	return filepath.Join(home, ".config", "vox", "config.yaml")
 }
 
 func defaults() Config {
@@ -73,7 +73,10 @@ var lastGood *Config
 // loadConfig re-reads the file every call. On error it logs and keeps the last good config.
 func loadConfig() Config {
 	c := defaults()
-	_, err := toml.DecodeFile(configPath(), &c)
+	data, err := os.ReadFile(configPath())
+	if err == nil {
+		err = yaml.Unmarshal(data, &c)
+	}
 	if err != nil {
 		if os.IsNotExist(err) {
 			return c

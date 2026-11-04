@@ -6,6 +6,6 @@ Hold Fn to dictate, release to paste. Groq whisper-large-v3 → whisper-large-v3
     vox                    # run (logs to stderr)
     vox -transcribe x.wav  # test the API chain on a file
 
-Config: `~/.config/vox/config.toml` (see `config.example.toml`), re-read on every recording.
+Config: `~/.config/vox/config.yaml` (see `config.example.yaml`), re-read on every recording.
 API keys: `GROQ_API_KEY` / `DEEPGRAM_API_KEY` env, else TypeWhisper's existing keychain entries.
 Needs Input Monitoring, Accessibility and Microphone permissions.
