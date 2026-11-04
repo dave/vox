@@ -25,6 +25,7 @@ type Replacement struct {
 type Config struct {
 	Language         string        `yaml:"language"`
 	MinHoldMs        int           `yaml:"min_hold_ms"`
+	DoubleTapMs      int           `yaml:"double_tap_ms"`
 	TailMs           int           `yaml:"tail_ms"`
 	WarnSeconds      int           `yaml:"warn_seconds"`
 	MaxSeconds       int           `yaml:"max_seconds"`
@@ -34,6 +35,9 @@ type Config struct {
 	WarnSound        string        `yaml:"warn_sound"`
 	ErrorSound       string        `yaml:"error_sound"`
 	PromptMaxChars   int           `yaml:"prompt_max_chars"`
+	SpeechRMS        float64       `yaml:"speech_rms"`
+	MinSpeechMs      int           `yaml:"min_speech_ms"`
+	NoSpeechProb     float64       `yaml:"no_speech_prob"`
 	Providers        []Provider    `yaml:"providers"`
 	Terms            []string      `yaml:"terms"`
 	Replacements     []Replacement `yaml:"replacements"`
@@ -51,6 +55,7 @@ func defaults() Config {
 	return Config{
 		Language:         "en",
 		MinHoldMs:        350,
+		DoubleTapMs:      400,
 		TailMs:           250,
 		WarnSeconds:      25,
 		MaxSeconds:       30,
@@ -60,6 +65,9 @@ func defaults() Config {
 		WarnSound:        "/System/Library/Sounds/Funk.aiff",
 		ErrorSound:       "/System/Library/Sounds/Basso.aiff",
 		PromptMaxChars:   800,
+		SpeechRMS:        400,
+		MinSpeechMs:      200,
+		NoSpeechProb:     0.6,
 		Providers: []Provider{
 			{Type: "groq", Model: "whisper-large-v3", Timeout: 5},
 			{Type: "groq", Model: "whisper-large-v3-turbo", Timeout: 5},
@@ -131,6 +139,13 @@ func (c Config) applyReplacements(s string) string {
 		s = re.ReplaceAllLiteralString(s, r.To)
 	}
 	return s
+}
+
+// silent reports whether pcm has too little speech-level audio to transcribe.
+func (c Config) silent(pcm []byte) bool {
+	ms, maxRMS := speechMs(pcm, c.SpeechRMS)
+	logf("level: %dms above speech_rms %.0f (loudest frame %d)", ms, c.SpeechRMS, maxRMS)
+	return ms < c.MinSpeechMs
 }
 
 func (c Config) String() string {

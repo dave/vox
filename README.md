@@ -9,6 +9,11 @@ transcript is pasted into whatever app has focus.
   then your previous clipboard contents are restored.
 - If a recording is silent (or comes back empty), vox pastes your previous
   dictation again. Hold Fn without speaking to repeat the last thing you said.
+- Double-tap Fn to paste your previous dictation again.
+
+  macOS's built-in Dictation also uses a double Fn press by default. To stop it
+  conflicting with vox, open **System Settings → Keyboard → Dictation** and set
+  **Shortcut** to something other than "Press 🌐 twice" (or turn Dictation off).
 - A warning sound plays at 25 s; recording auto-stops (and still transcribes) at 30 s.
 - Providers are tried in order until one succeeds. The default is Groq
   `whisper-large-v3`, then Groq `whisper-large-v3-turbo`, then Deepgram `nova-3`.
@@ -129,11 +134,14 @@ cp config.example.yaml ~/.config/vox/config.yaml
 |---|---|---|
 | `language` | `en` | Language code sent to the provider |
 | `min_hold_ms` | `350` | Fn presses shorter than this are ignored |
+| `double_tap_ms` | `400` | Two Fn taps this close together re-paste the last dictation (`0` = off) |
 | `tail_ms` | `250` | How long to keep recording after Fn is released |
 | `warn_seconds` | `25` | When the warning sound plays |
 | `max_seconds` | `30` | When recording auto-stops (`0` = no limit) |
 | `restore_clipboard` | `true` | Put the previous clipboard back after pasting |
 | `start_sound` / `stop_sound` / `warn_sound` / `error_sound` | Tink / Pop / Funk / Basso | Paths to sound files |
+| `speech_rms` / `min_speech_ms` | `400` / `200` | A recording needs at least `min_speech_ms` of 20 ms frames louder than `speech_rms`. Anything quieter counts as silent: it isn't sent, and the previous dictation is pasted instead. Each recording's level is logged so you can tune these |
+| `no_speech_prob` | `0.6` | Groq: drop segments Whisper rates as probably not speech (`0` = off) |
 | `prompt_max_chars` | `800` | Limit on the vocabulary prompt (Whisper allows about 224 tokens) |
 | `providers` | Groq large-v3, Groq turbo, Deepgram nova-3 | Fallback chain. Each entry has a `type` (`groq` or `deepgram`), a `model` and `timeout_seconds` |
 | `terms` | none | Vocabulary hints. They're sent as the Whisper prompt to Groq and as keyterms to Deepgram |

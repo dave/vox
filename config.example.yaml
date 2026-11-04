@@ -2,11 +2,20 @@
 
 language: en
 min_hold_ms: 350        # shorter Fn presses are ignored (emoji picker still works)
+double_tap_ms: 400      # two Fn taps this close together re-paste the last dictation (0 = off)
 tail_ms: 250            # keep recording briefly after Fn release
 warn_seconds: 25        # warning beep
 max_seconds: 30         # auto-stop and transcribe (0 = no limit)
 restore_clipboard: true
 prompt_max_chars: 800   # Whisper prompt limit (~224 tokens)
+
+# Silence detection. Whisper hallucinates words on silent audio, so recordings
+# with less than min_speech_ms of audio louder than speech_rms aren't sent at all
+# (the previous dictation is re-pasted instead). The log prints each recording's
+# level, so you can tune these to your mic.
+speech_rms: 400         # 16-bit RMS per 20ms frame counted as speech
+min_speech_ms: 200
+no_speech_prob: 0.6     # Groq: drop segments Whisper rates as more likely non-speech (0 = off)
 
 start_sound: /System/Library/Sounds/Tink.aiff
 stop_sound:  /System/Library/Sounds/Pop.aiff

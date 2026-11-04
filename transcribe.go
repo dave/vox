@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -37,18 +38,25 @@ func wav(pcm []byte) []byte {
 	return b.Bytes()
 }
 
-func peak(pcm []byte) int {
-	m := 0
-	for i := 0; i+1 < len(pcm); i += 2 {
-		v := int(int16(binary.LittleEndian.Uint16(pcm[i:])))
-		if v < 0 {
-			v = -v
+// speechMs returns how many milliseconds of the recording are in 20ms frames
+// whose RMS exceeds threshold, plus the loudest frame's RMS (for tuning).
+func speechMs(pcm []byte, threshold float64) (ms int, maxRMS int) {
+	const frame = sampleRate / 50 * 2 // 20ms of 16-bit samples, in bytes
+	for off := 0; off+frame <= len(pcm); off += frame {
+		var sum float64
+		for i := off; i < off+frame; i += 2 {
+			v := float64(int16(binary.LittleEndian.Uint16(pcm[i:])))
+			sum += v * v
 		}
-		if v > m {
-			m = v
+		rms := math.Sqrt(sum / (frame / 2))
+		if int(rms) > maxRMS {
+			maxRMS = int(rms)
+		}
+		if rms > threshold {
+			ms += 20
 		}
 	}
-	return m
+	return
 }
 
 var keyCache = map[string]string{}
@@ -87,7 +95,7 @@ func transcribe(cfg Config, audio []byte) (string, error) {
 		var err error
 		switch p.Type {
 		case "groq":
-			text, err = groq(ctx, p.Model, cfg.Language, prompt, audio)
+			text, err = groq(ctx, p.Model, cfg.Language, prompt, cfg.NoSpeechProb, audio)
 		case "deepgram":
 			text, err = deepgram(ctx, p.Model, cfg.Language, cfg.Terms, audio)
 		default:
@@ -104,7 +112,7 @@ func transcribe(cfg Config, audio []byte) (string, error) {
 	return "", fmt.Errorf("all providers failed: %s", strings.Join(errs, "; "))
 }
 
-func groq(ctx context.Context, model, lang, prompt string, audio []byte) (string, error) {
+func groq(ctx context.Context, model, lang, prompt string, noSpeech float64, audio []byte) (string, error) {
 	key, err := apiKey("groq")
 	if err != nil {
 		return "", err
@@ -114,7 +122,7 @@ func groq(ctx context.Context, model, lang, prompt string, audio []byte) (string
 	fw, _ := mw.CreateFormFile("file", "audio.wav")
 	fw.Write(audio)
 	mw.WriteField("model", model)
-	mw.WriteField("response_format", "json")
+	mw.WriteField("response_format", "verbose_json")
 	mw.WriteField("temperature", "0")
 	if lang != "" {
 		mw.WriteField("language", lang)
@@ -127,12 +135,28 @@ func groq(ctx context.Context, model, lang, prompt string, audio []byte) (string
 	req.Header.Set("Authorization", "Bearer "+key)
 	req.Header.Set("Content-Type", mw.FormDataContentType())
 	var out struct {
-		Text string `json:"text"`
+		Text     string `json:"text"`
+		Segments []struct {
+			Text         string  `json:"text"`
+			NoSpeechProb float64 `json:"no_speech_prob"`
+		} `json:"segments"`
 	}
 	if err := doJSON(req, &out); err != nil {
 		return "", err
 	}
-	return out.Text, nil
+	if len(out.Segments) == 0 || noSpeech <= 0 {
+		return out.Text, nil
+	}
+	// Whisper invents words for silence; drop segments it thinks aren't speech.
+	var kept []string
+	for _, seg := range out.Segments {
+		if seg.NoSpeechProb > noSpeech {
+			logf("dropped segment %q (no_speech_prob %.2f)", strings.TrimSpace(seg.Text), seg.NoSpeechProb)
+			continue
+		}
+		kept = append(kept, strings.TrimSpace(seg.Text))
+	}
+	return strings.Join(kept, " "), nil
 }
 
 func deepgram(ctx context.Context, model, lang string, terms []string, audio []byte) (string, error) {

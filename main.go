@@ -46,6 +46,10 @@ func main() {
 			os.Exit(1)
 		}
 		cfg := loadConfig()
+		if len(b) > 44 && cfg.silent(b[44:]) {
+			fmt.Fprintln(os.Stderr, "silence")
+			return
+		}
 		t, err := transcribe(cfg, b)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
@@ -105,7 +109,7 @@ func loop() {
 		timers = nil
 		gen++
 	}
-	var t0 time.Time
+	var t0, lastTap time.Time
 
 	for e := range events {
 		switch {
@@ -138,6 +142,19 @@ func loop() {
 			clear()
 			audioStop() // tap (emoji picker) or Fn+key shortcut: discard
 			st = idle
+			if e == evFnUp {
+				now := time.Now()
+				if cfg.DoubleTapMs > 0 && now.Sub(lastTap) < time.Duration(cfg.DoubleTapMs)*time.Millisecond {
+					lastTap = time.Time{}
+					logf("double tap")
+					cfgs <- cfg
+					jobs <- nil // nil = re-paste the previous dictation
+				} else {
+					lastTap = now
+				}
+			} else {
+				lastTap = time.Time{}
+			}
 
 		case e == evOtherKey && st == recording:
 			clear()
@@ -163,13 +180,15 @@ func loop() {
 }
 
 // worker transcribes sequentially so pastes stay in order.
-// A silent recording (or empty transcript) re-pastes the previous dictation.
+// A double tap, silent recording or empty transcript re-pastes the previous dictation.
 func worker(jobs <-chan []byte, cfgs <-chan Config) {
 	var last string
 	for pcm := range jobs {
 		cfg := <-cfgs
 		var text string
-		if peak(pcm) < 300 {
+		if pcm == nil {
+			time.Sleep(150 * time.Millisecond) // let the emoji picker toggle settle
+		} else if cfg.silent(pcm) {
 			logf("silence")
 		} else {
 			cfg = loadConfig() // pick up dictionary edits made while recording
