@@ -1,7 +1,7 @@
 # Vox config — re-read on every recording, no restart needed.
 
 language: en
-min_hold_ms: 350        # shorter Fn presses are ignored (emoji picker still works)
+min_hold_ms: 250        # shorter Fn presses are ignored (emoji picker still works)
 double_tap_ms: 400      # two Fn taps this close together re-paste the last dictation (0 = off)
 tail_ms: 250            # keep recording briefly after Fn release
 warn_seconds: 25        # warning beep

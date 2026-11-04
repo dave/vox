@@ -54,7 +54,7 @@ func configPath() string {
 func defaults() Config {
 	return Config{
 		Language:         "en",
-		MinHoldMs:        350,
+		MinHoldMs:        250,
 		DoubleTapMs:      400,
 		TailMs:           250,
 		WarnSeconds:      25,

@@ -143,3 +143,26 @@ void dw_paste(const char *text, int restore_delay_ms) {
         }
     });
 }
+
+// In-process sound playback with a cache: much lower latency than spawning afplay.
+static NSMutableDictionary<NSString *, NSSound *> *sounds;
+
+static NSSound *dw_sound(NSString *p) {
+    if (!sounds) sounds = [NSMutableDictionary new];
+    NSSound *s = sounds[p];
+    if (!s) {
+        s = [[NSSound alloc] initWithContentsOfFile:p byReference:YES];
+        if (s) sounds[p] = s;
+    }
+    return s;
+}
+
+void dw_play_sound(const char *path, int preload_only) {
+    NSString *p = [NSString stringWithUTF8String:path];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSSound *s = dw_sound(p);
+        if (!s || preload_only) return;
+        [s stop];
+        [s play];
+    });
+}

@@ -3,7 +3,7 @@
 Minimal push-to-talk dictation for macOS. Hold **Fn**, speak, release — the
 transcript is pasted into whatever app has focus.
 
-- Hold Fn for more than 350 ms to start recording (a sound plays). Quick Fn taps
+- Hold Fn for more than 250 ms to start recording (a sound plays). Quick Fn taps
   still open the emoji picker, and Fn + another key cancels the recording.
 - Release Fn to stop. The audio is transcribed and pasted via the clipboard,
   then your previous clipboard contents are restored.
@@ -133,7 +133,7 @@ cp config.example.yaml ~/.config/vox/config.yaml
 | Key | Default | Meaning |
 |---|---|---|
 | `language` | `en` | Language code sent to the provider |
-| `min_hold_ms` | `350` | Fn presses shorter than this are ignored |
+| `min_hold_ms` | `250` | Fn presses shorter than this are ignored |
 | `double_tap_ms` | `400` | Two Fn taps this close together re-paste the last dictation (`0` = off) |
 | `tail_ms` | `250` | How long to keep recording after Fn is released |
 | `warn_seconds` | `25` | When the warning sound plays |

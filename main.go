@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"os/exec"
 	"runtime"
 	"strings"
 	"time"
@@ -32,7 +31,7 @@ func playSound(path string) {
 	if path == "" {
 		return
 	}
-	go exec.Command("afplay", path).Run()
+	nativeSound(path, false)
 }
 
 func main() {
@@ -72,6 +71,11 @@ func main() {
 	if !startTap() {
 		logf("could not create event tap — Input Monitoring not granted?")
 		os.Exit(1)
+	}
+	for _, p := range []string{cfg.StartSound, cfg.StopSound, cfg.WarnSound, cfg.ErrorSound} {
+		if p != "" {
+			nativeSound(p, true)
+		}
 	}
 	go loop()
 	logf("ready — hold Fn to dictate")

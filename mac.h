@@ -11,3 +11,5 @@ int dw_audio_start(void);
 void dw_audio_stop(void);
 // Puts text on the clipboard, sends Cmd-V, optionally restores old clipboard after delay.
 void dw_paste(const char *text, int restore_delay_ms);
+// Plays a sound file in-process (cached). preload_only=1 just loads it.
+void dw_play_sound(const char *path, int preload_only);
