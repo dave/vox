@@ -3,7 +3,7 @@
 Minimal macOS push-to-talk dictation in Go, replacing Dave's TypeWhisper fork (~/src/typewhisper-mac).
 
 ## Behaviour
-- Hold Fn (>250ms, min_hold_ms) → start sound (NSSound in-process, preloaded; afplay was slow), record 16kHz mono via AudioQueue. Release → stop sound, transcribe, paste via clipboard + synthetic Cmd-V, then restore the previous clipboard.
+- Fn down → start sound immediately (NSSound in-process, preloaded; afplay was slow; taps beep too, Dave is fine with that). Held >250ms (min_hold_ms) → record 16kHz mono via AudioQueue. Release → stop sound, transcribe, paste via clipboard + synthetic Cmd-V, then restore the previous clipboard.
 - Event tap is **listen-only**: Fn taps still open the emoji picker; Fn+other key cancels the recording.
 - Silence gate: < min_speech_ms of 20ms frames above speech_rms → not sent (Whisper hallucinates on silence, often vocab terms from the prompt). Groq uses verbose_json and drops segments with no_speech_prob > 0.6.
 - Silent recording, empty transcript or Fn double tap (double_tap_ms) → re-paste the previous dictation (in memory only). macOS Dictation's "Press 🌐 twice" shortcut conflicts with the double tap.

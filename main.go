@@ -124,6 +124,7 @@ func loop() {
 				playSound(cfg.ErrorSound)
 				continue
 			}
+			playSound(cfg.StartSound) // immediately, even if this turns out to be a tap
 			st = pending
 			t0 = time.Now()
 			clear()
@@ -131,7 +132,6 @@ func loop() {
 
 		case e == evHoldReached && st == pending:
 			st = recording
-			playSound(cfg.StartSound)
 			if cfg.WarnSeconds > 0 {
 				after(time.Duration(cfg.WarnSeconds)*time.Second, evWarn, gen)
 			}

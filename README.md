@@ -3,7 +3,8 @@
 Minimal push-to-talk dictation for macOS. Hold **Fn**, speak, release — the
 transcript is pasted into whatever app has focus.
 
-- Hold Fn for more than 250 ms to start recording (a sound plays). Quick Fn taps
+- Press Fn and the start sound plays straight away. Hold it for more than 250 ms to
+  dictate (`min_hold_ms`); a quick tap also beeps but is otherwise ignored. Quick Fn taps
   still open the emoji picker, and Fn + another key cancels the recording.
 - Release Fn to stop. The audio is transcribed and pasted via the clipboard,
   then your previous clipboard contents are restored.
