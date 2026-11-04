@@ -10,6 +10,8 @@ transcript is pasted into whatever app has focus.
   then your previous clipboard contents are restored.
 - If a recording is silent (or comes back empty), vox pastes your previous
   dictation again. Hold Fn without speaking to repeat the last thing you said.
+- Starting a new dictation cancels any earlier one still being transcribed, so
+  a slow response can't paste after your newer dictation.
 - Double-tap Fn to paste your previous dictation again.
 
   macOS's built-in Dictation also uses a double Fn press by default. To stop it

@@ -81,7 +81,7 @@ func apiKey(provider string) (string, error) {
 	return k, nil
 }
 
-func transcribe(cfg Config, audio []byte) (string, error) {
+func transcribe(parent context.Context, cfg Config, audio []byte) (string, error) {
 	prompt := cfg.prompt()
 	var errs []string
 	for i, p := range cfg.Providers {
@@ -90,7 +90,10 @@ func transcribe(cfg Config, audio []byte) (string, error) {
 		if timeout <= 0 {
 			timeout = 10 * time.Second
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		if parent.Err() != nil {
+			return "", parent.Err()
+		}
+		ctx, cancel := context.WithTimeout(parent, timeout)
 		var text string
 		var err error
 		switch p.Type {
@@ -102,6 +105,9 @@ func transcribe(cfg Config, audio []byte) (string, error) {
 			err = fmt.Errorf("unknown provider type %q", p.Type)
 		}
 		cancel()
+		if parent.Err() != nil {
+			return "", parent.Err() // superseded by a newer recording: don't fall back
+		}
 		if err == nil {
 			logf("%s/%s ok in %v", p.Type, p.Model, time.Since(t0).Round(time.Millisecond))
 			if i > 0 {

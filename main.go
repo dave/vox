@@ -2,11 +2,15 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
 	"runtime"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -49,7 +53,7 @@ func main() {
 			fmt.Fprintln(os.Stderr, "silence")
 			return
 		}
-		t, err := transcribe(cfg, b)
+		t, err := transcribe(context.Background(), cfg, b)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
@@ -85,9 +89,9 @@ func main() {
 type state int
 
 const (
-	idle state = iota
-	pending   // Fn down, waiting to see if it's a tap or a hold
-	recording // hold confirmed
+	idle      state = iota
+	pending         // Fn down, waiting to see if it's a tap or a hold
+	recording       // hold confirmed
 )
 
 func loop() {
@@ -95,9 +99,8 @@ func loop() {
 	var cfg Config
 	var timers []*time.Timer
 	gen := 0 // invalidates stale timer events
-	jobs := make(chan []byte, 4)
-	cfgs := make(chan Config, 4)
-	go worker(jobs, cfgs)
+	jobs := make(chan job, 4)
+	go worker(jobs)
 
 	after := func(d time.Duration, e event, g int) {
 		timers = append(timers, time.AfterFunc(d, func() {
@@ -132,6 +135,7 @@ func loop() {
 
 		case e == evHoldReached && st == pending:
 			st = recording
+			supersede() // a new dictation makes any in-flight one stale
 			if cfg.WarnSeconds > 0 {
 				after(time.Duration(cfg.WarnSeconds)*time.Second, evWarn, gen)
 			}
@@ -151,8 +155,7 @@ func loop() {
 				if cfg.DoubleTapMs > 0 && now.Sub(lastTap) < time.Duration(cfg.DoubleTapMs)*time.Millisecond {
 					lastTap = time.Time{}
 					logf("double tap")
-					cfgs <- cfg
-					jobs <- nil // nil = re-paste the previous dictation
+					jobs <- job{cfg: cfg, gen: jobGen.Load()} // nil pcm = re-paste the previous dictation
 				} else {
 					lastTap = now
 				}
@@ -177,18 +180,46 @@ func loop() {
 			playSound(cfg.StopSound)
 			logf("recorded %.1fs", time.Since(t0).Seconds())
 			st = idle
-			cfgs <- cfg
-			jobs <- pcm
+			jobs <- job{pcm: pcm, cfg: cfg, gen: jobGen.Load()}
 		}
 	}
 }
 
+type job struct {
+	pcm []byte // nil = re-paste the previous dictation
+	cfg Config
+	gen int64
+}
+
+// jobGen is bumped whenever a new dictation starts; jobs from an older
+// generation are dropped (and their in-flight HTTP requests cancelled).
+var (
+	jobGen       atomic.Int64
+	inflightMu   sync.Mutex
+	inflightStop context.CancelFunc
+)
+
+func supersede() {
+	jobGen.Add(1)
+	inflightMu.Lock()
+	if inflightStop != nil {
+		inflightStop()
+	}
+	inflightMu.Unlock()
+}
+
+func stale(j job) bool { return j.gen != jobGen.Load() }
+
 // worker transcribes sequentially so pastes stay in order.
 // A double tap, silent recording or empty transcript re-pastes the previous dictation.
-func worker(jobs <-chan []byte, cfgs <-chan Config) {
+func worker(jobs <-chan job) {
 	var last string
-	for pcm := range jobs {
-		cfg := <-cfgs
+	for j := range jobs {
+		if stale(j) {
+			logf("dropped stale recording")
+			continue
+		}
+		cfg, pcm := j.cfg, j.pcm
 		var text string
 		if pcm == nil {
 			time.Sleep(150 * time.Millisecond) // let the emoji picker toggle settle
@@ -196,7 +227,22 @@ func worker(jobs <-chan []byte, cfgs <-chan Config) {
 			logf("silence")
 		} else {
 			cfg = loadConfig() // pick up dictionary edits made while recording
-			t, err := transcribe(cfg, wav(pcm))
+			ctx, cancel := context.WithCancel(context.Background())
+			inflightMu.Lock()
+			inflightStop = cancel
+			inflightMu.Unlock()
+			if stale(j) { // superseded between the check above and registering cancel
+				cancel()
+			}
+			t, err := transcribe(ctx, cfg, wav(pcm))
+			inflightMu.Lock()
+			inflightStop = nil
+			inflightMu.Unlock()
+			cancel()
+			if errors.Is(err, context.Canceled) || stale(j) {
+				logf("superseded by a newer recording, discarding")
+				continue
+			}
 			if err != nil {
 				logf("%v", err)
 				playSound(cfg.ErrorSound)
@@ -206,6 +252,9 @@ func worker(jobs <-chan []byte, cfgs <-chan Config) {
 			if text == "" {
 				logf("empty transcript")
 			}
+		}
+		if stale(j) {
+			continue
 		}
 		if text == "" {
 			if last == "" {
