@@ -18,7 +18,8 @@ transcript is pasted into whatever app has focus.
 - A warning sound plays at 25 s; recording auto-stops (and still transcribes) at 30 s.
 - Providers are tried in order until one succeeds. The default is Groq
   `whisper-large-v3`, then Groq `whisper-large-v3-turbo`, then Deepgram `nova-3`.
-  If they all fail, the error sound plays and the errors are logged to stderr.
+  If the first fails but a later one works, a soft Purr plays. If they all fail,
+  the error sound plays. Every failure is logged to stderr.
 
 ## Requirements
 
@@ -141,6 +142,7 @@ cp config.example.yaml ~/.config/vox/config.yaml
 | `max_seconds` | `30` | When recording auto-stops (`0` = no limit) |
 | `restore_clipboard` | `true` | Put the previous clipboard back after pasting |
 | `start_sound` / `stop_sound` / `warn_sound` / `error_sound` | Tink / Pop / Funk / Basso | Paths to sound files |
+| `fallback_sound` | Purr | Plays when the first provider failed but a later one succeeded (`""` = silent) |
 | `speech_rms` / `min_speech_ms` | `400` / `200` | A recording needs at least `min_speech_ms` of 20 ms frames louder than `speech_rms`. Anything quieter counts as silent: it isn't sent, and the previous dictation is pasted instead. Each recording's level is logged so you can tune these |
 | `no_speech_prob` | `0.6` | Groq: drop segments Whisper rates as probably not speech (`0` = off) |
 | `prompt_max_chars` | `800` | Limit on the vocabulary prompt (Whisper allows about 224 tokens) |

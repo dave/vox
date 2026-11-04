@@ -34,6 +34,7 @@ type Config struct {
 	StopSound        string        `yaml:"stop_sound"`
 	WarnSound        string        `yaml:"warn_sound"`
 	ErrorSound       string        `yaml:"error_sound"`
+	FallbackSound    string        `yaml:"fallback_sound"`
 	PromptMaxChars   int           `yaml:"prompt_max_chars"`
 	SpeechRMS        float64       `yaml:"speech_rms"`
 	MinSpeechMs      int           `yaml:"min_speech_ms"`
@@ -64,6 +65,7 @@ func defaults() Config {
 		StopSound:        "/System/Library/Sounds/Pop.aiff",
 		WarnSound:        "/System/Library/Sounds/Funk.aiff",
 		ErrorSound:       "/System/Library/Sounds/Basso.aiff",
+		FallbackSound:    "/System/Library/Sounds/Purr.aiff",
 		PromptMaxChars:   800,
 		SpeechRMS:        400,
 		MinSpeechMs:      200,

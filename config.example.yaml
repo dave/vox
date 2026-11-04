@@ -21,6 +21,7 @@ start_sound: /System/Library/Sounds/Tink.aiff
 stop_sound:  /System/Library/Sounds/Pop.aiff
 warn_sound:  /System/Library/Sounds/Funk.aiff
 error_sound: /System/Library/Sounds/Basso.aiff
+fallback_sound: /System/Library/Sounds/Purr.aiff   # a provider other than the first succeeded ("" = silent)
 
 # Tried in order until one succeeds.
 providers:

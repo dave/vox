@@ -72,7 +72,7 @@ func main() {
 		logf("could not create event tap — Input Monitoring not granted?")
 		os.Exit(1)
 	}
-	for _, p := range []string{cfg.StartSound, cfg.StopSound, cfg.WarnSound, cfg.ErrorSound} {
+	for _, p := range []string{cfg.StartSound, cfg.StopSound, cfg.WarnSound, cfg.ErrorSound, cfg.FallbackSound} {
 		if p != "" {
 			nativeSound(p, true)
 		}

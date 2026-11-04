@@ -84,7 +84,7 @@ func apiKey(provider string) (string, error) {
 func transcribe(cfg Config, audio []byte) (string, error) {
 	prompt := cfg.prompt()
 	var errs []string
-	for _, p := range cfg.Providers {
+	for i, p := range cfg.Providers {
 		t0 := time.Now()
 		timeout := time.Duration(p.Timeout) * time.Second
 		if timeout <= 0 {
@@ -104,6 +104,9 @@ func transcribe(cfg Config, audio []byte) (string, error) {
 		cancel()
 		if err == nil {
 			logf("%s/%s ok in %v", p.Type, p.Model, time.Since(t0).Round(time.Millisecond))
+			if i > 0 {
+				playSound(cfg.FallbackSound)
+			}
 			return text, nil
 		}
 		logf("%s/%s failed in %v: %v", p.Type, p.Model, time.Since(t0).Round(time.Millisecond), err)

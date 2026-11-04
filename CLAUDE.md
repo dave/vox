@@ -9,7 +9,7 @@ Minimal macOS push-to-talk dictation in Go, replacing Dave's TypeWhisper fork (~
 - Silent recording, empty transcript or Fn double tap (double_tap_ms) → re-paste the previous dictation (in memory only). macOS Dictation's "Press 🌐 twice" shortcut conflicts with the double tap.
 - 25s warning sound, 30s auto-stop (transcribes, doesn't discard).
 - Providers tried in order: Groq whisper-large-v3 → Groq whisper-large-v3-turbo → Deepgram nova-3. large-v3 stays first: in testing it was ~500ms vs ~700ms for turbo, and more accurate.
-- Every provider error is logged to stderr with timing; if all fail, Basso sound plays.
+- Every provider error is logged to stderr with timing; a later provider succeeding plays fallback_sound (Purr); if all fail, Basso.
 
 ## Files
 - `mac.m` / `mac.h` / `mac.go`: cgo layer (event tap, AudioQueue, pasteboard, permissions).
