@@ -20,4 +20,4 @@ Minimal macOS push-to-talk dictation in Go, replacing Dave's TypeWhisper fork (~
 ## Dev
 - `make` builds and ad-hoc signs (embeds Info.plist for the microphone permission); `make install` copies to ~/.local/bin.
 - `./vox -transcribe file.wav` tests the API chain without the hotkey.
-- `make agent` installs a LaunchAgent (`launchd/com.dave.vox.plist`, logs to ~/Library/Logs/vox.log); under launchd vox needs its own TCC grants, not the terminal's.
+- Dave runs vox in a terminal to watch its output, and does not want a LaunchAgent for himself. `make agent` is an optional extra for other users: it installs a LaunchAgent (`launchd/com.dave.vox.plist`, logs to ~/Library/Logs/vox.log); under launchd vox needs its own TCC grants, not the terminal's.
