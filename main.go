@@ -163,25 +163,35 @@ func loop() {
 }
 
 // worker transcribes sequentially so pastes stay in order.
+// A silent recording (or empty transcript) re-pastes the previous dictation.
 func worker(jobs <-chan []byte, cfgs <-chan Config) {
+	var last string
 	for pcm := range jobs {
 		cfg := <-cfgs
+		var text string
 		if peak(pcm) < 300 {
-			logf("silence, skipping")
-			continue
+			logf("silence")
+		} else {
+			cfg = loadConfig() // pick up dictionary edits made while recording
+			t, err := transcribe(cfg, wav(pcm))
+			if err != nil {
+				logf("%v", err)
+				playSound(cfg.ErrorSound)
+				continue
+			}
+			text = cfg.applyReplacements(strings.TrimSpace(t))
+			if text == "" {
+				logf("empty transcript")
+			}
 		}
-		cfg = loadConfig() // pick up dictionary edits made while recording
-		text, err := transcribe(cfg, wav(pcm))
-		if err != nil {
-			logf("%v", err)
-			playSound(cfg.ErrorSound)
-			continue
-		}
-		text = cfg.applyReplacements(strings.TrimSpace(text))
 		if text == "" {
-			logf("empty transcript")
-			continue
+			if last == "" {
+				continue
+			}
+			logf("repeating previous dictation")
+			text = last
 		}
+		last = text
 		logf("→ %q", text)
 		restore := 0
 		if cfg.RestoreClipboard {

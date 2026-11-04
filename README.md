@@ -7,6 +7,8 @@ transcript is pasted into whatever app has focus.
   still open the emoji picker, and Fn + another key cancels the recording.
 - Release Fn to stop. The audio is transcribed and pasted via the clipboard,
   then your previous clipboard contents are restored.
+- If a recording is silent (or comes back empty), vox pastes your previous
+  dictation again. Hold Fn without speaking to repeat the last thing you said.
 - A warning sound plays at 25 s; recording auto-stops (and still transcribes) at 30 s.
 - Providers are tried in order until one succeeds. The default is Groq
   `whisper-large-v3`, then Groq `whisper-large-v3-turbo`, then Deepgram `nova-3`.

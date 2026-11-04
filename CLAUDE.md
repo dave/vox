@@ -5,6 +5,7 @@ Minimal macOS push-to-talk dictation in Go, replacing Dave's TypeWhisper fork (~
 ## Behaviour
 - Hold Fn (>350ms) → start sound, record 16kHz mono via AudioQueue. Release → stop sound, transcribe, paste via clipboard + synthetic Cmd-V, then restore the previous clipboard.
 - Event tap is **listen-only**: Fn taps still open the emoji picker; Fn+other key cancels the recording.
+- Silent recording / empty transcript → re-paste the previous dictation (in memory only).
 - 25s warning sound, 30s auto-stop (transcribes, doesn't discard).
 - Providers tried in order: Groq whisper-large-v3 → Groq whisper-large-v3-turbo → Deepgram nova-3. large-v3 stays first: in testing it was ~500ms vs ~700ms for turbo, and more accurate.
 - Every provider error is logged to stderr with timing; if all fail, Basso sound plays.
