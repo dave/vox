@@ -21,37 +21,14 @@ providers:
 
 # Vocabulary: sent as the Whisper prompt (Groq) and as keyterms (Deepgram).
 terms:
-  - "Viatrail"
-  - "MapLibre"
-  - "terrain-RGB"
-  - "NASADEM"
-  - "GeoTIFF"
-  - "Cloudflare"
-  - "R2"
+  - "Kubernetes"
+  - "PostgreSQL"
   - "Tailscale"
-  - "pinchy"
-  - "pinchy-mac-mini"
-  - "pinchy-laptop"
-  - "openclaw"
-  - "viatrail-pipeline"
-  - "pinchy-oracle"
-  - "AGENTS.md"
-  - "Mattermost"
-  - "tippecanoe"
-  - "Lucide"
   - "Claude Code"
-  - "HiClaw"
-  - "Deepseek"
-  - "Hetzner"
-  - "iOS"
-  - "Maestro"
-  - "Claude"
-  - "Camofox"
-  - "kludge"
+  - "GeoTIFF"
 
 # Whole-word replacements applied to the transcript.
 # Case-insensitive unless you add  case_sensitive: true
 replacements:
-  - { from: clawed,  to: claude }
-  - { from: Clawd,   to: claude }
-  - { from: matamos, to: mattermost }
+  - { from: clawed, to: Claude }
+  - { from: post gress, to: Postgres }
