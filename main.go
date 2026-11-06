@@ -3,10 +3,13 @@ package main
 
 import (
 	"context"
+	"encoding/binary"
 	"errors"
 	"flag"
 	"fmt"
+	"math"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
@@ -35,7 +38,7 @@ func playSound(path string) {
 	if path == "" {
 		return
 	}
-	nativeSound(path, false)
+	nativeSound(path, 1, false)
 }
 
 func main() {
@@ -78,7 +81,7 @@ func main() {
 	}
 	for _, p := range []string{cfg.StartSound, cfg.StopSound, cfg.WarnSound, cfg.ErrorSound, cfg.FallbackSound} {
 		if p != "" {
-			nativeSound(p, true)
+			nativeSound(p, 1, true)
 		}
 	}
 	go loop()
@@ -235,7 +238,9 @@ func worker(jobs <-chan job) {
 			if stale(j) { // superseded between the check above and registering cancel
 				cancel()
 			}
+			stopTicks := ticker(cfg)
 			t, err := transcribe(ctx, cfg, wav(pcm))
+			stopTicks()
 			inflightMu.Lock()
 			inflightStop = nil
 			inflightMu.Unlock()
@@ -273,4 +278,58 @@ func worker(jobs <-chan job) {
 		}
 		paste(text, restore)
 	}
+}
+
+// ticker plays a quiet tick every TickMs while waiting for the server.
+// The first tick comes after one interval, so fast responses stay silent.
+func ticker(cfg Config) (stop func()) {
+	path := cfg.TickSound
+	if path == "builtin" {
+		path = tickFile()
+	}
+	if path == "" || cfg.TickMs <= 0 {
+		return func() {}
+	}
+	done := make(chan struct{})
+	go func() {
+		t := time.NewTicker(time.Duration(cfg.TickMs) * time.Millisecond)
+		defer t.Stop()
+		for {
+			select {
+			case <-done:
+				return
+			case <-t.C:
+				nativeSound(path, float32(cfg.TickVolume), false)
+			}
+		}
+	}()
+	return func() { close(done) }
+}
+
+var tickPath string
+
+// tickFile writes a tiny synthesized click (8ms decaying 3kHz blip) to the
+// cache dir once and returns its path.
+func tickFile() string {
+	if tickPath != "" {
+		return tickPath
+	}
+	dir, err := os.UserCacheDir()
+	if err != nil {
+		return ""
+	}
+	dir = filepath.Join(dir, "vox")
+	p := filepath.Join(dir, "tick.wav")
+	n := sampleRate * 8 / 1000
+	pcm := make([]byte, n*2)
+	for i := 0; i < n; i++ {
+		x := float64(i) / sampleRate
+		v := math.Sin(2*math.Pi*3000*x) * math.Exp(-x*900) * 20000
+		binary.LittleEndian.PutUint16(pcm[i*2:], uint16(int16(v)))
+	}
+	if os.MkdirAll(dir, 0o755) != nil || os.WriteFile(p, wav(pcm), 0o644) != nil {
+		return ""
+	}
+	tickPath = p
+	return p
 }

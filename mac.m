@@ -157,12 +157,13 @@ static NSSound *dw_sound(NSString *p) {
     return s;
 }
 
-void dw_play_sound(const char *path, int preload_only) {
+void dw_play_sound(const char *path, float volume, int preload_only) {
     NSString *p = [NSString stringWithUTF8String:path];
     dispatch_async(dispatch_get_main_queue(), ^{
         NSSound *s = dw_sound(p);
         if (!s || preload_only) return;
         [s stop];
+        s.volume = volume;
         [s play];
     });
 }

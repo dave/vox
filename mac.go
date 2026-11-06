@@ -81,12 +81,12 @@ func paste(text string, restoreMs int) {
 	C.dw_paste(cs, C.int(restoreMs))
 }
 
-func nativeSound(path string, preload bool) {
+func nativeSound(path string, volume float32, preload bool) {
 	cs := C.CString(path)
 	defer C.free(unsafe.Pointer(cs))
 	p := C.int(0)
 	if preload {
 		p = 1
 	}
-	C.dw_play_sound(cs, p)
+	C.dw_play_sound(cs, C.float(volume), p)
 }

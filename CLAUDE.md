@@ -8,6 +8,7 @@ Minimal macOS push-to-talk dictation in Go, replacing Dave's TypeWhisper fork (~
 - Silence gate: < min_speech_ms of 20ms frames above speech_rms → not sent (Whisper hallucinates on silence, often vocab terms from the prompt). Groq uses verbose_json and drops segments with no_speech_prob > 0.6.
 - Silent recording / empty transcript → nothing pasted. Fn double tap (double_tap_ms) → re-paste the previous dictation (in memory only). macOS Dictation's "Press 🌐 twice" shortcut conflicts with the double tap.
 - Starting a new hold supersedes older dictations: in-flight HTTP is cancelled (no fallback) and queued jobs are dropped. Double tap does not supersede; it queues and repeats the latest.
+- While waiting on the server: quiet synthesized tick (tick_sound: builtin → ~/Library/Caches/vox/tick.wav) every tick_ms=200 at tick_volume=0.25; first tick after one interval.
 - 25s warning sound, 30s auto-stop (transcribes, doesn't discard).
 - Providers tried in order: Groq whisper-large-v3 → Groq whisper-large-v3-turbo → Deepgram nova-3. large-v3 stays first: in testing it was ~500ms vs ~700ms for turbo, and more accurate.
 - Every provider error is logged to stderr with timing; a later provider succeeding plays fallback_sound (Purr); if all fail, Basso.

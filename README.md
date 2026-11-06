@@ -9,6 +9,7 @@ transcript is pasted into whatever app has focus.
 - Release Fn to stop. The audio is transcribed and pasted via the clipboard,
   then your previous clipboard contents are restored.
 - Silent recordings are ignored: they aren't sent, and nothing is pasted.
+- While vox waits for the server, a quiet tick plays every 200 ms.
 - Starting a new dictation cancels any earlier one still being transcribed, so
   a slow response can't paste after your newer dictation.
 - Double-tap Fn to paste your previous dictation again.
@@ -143,6 +144,7 @@ cp config.example.yaml ~/.config/vox/config.yaml
 | `max_seconds` | `30` | When recording auto-stops (`0` = no limit) |
 | `restore_clipboard` | `true` | Put the previous clipboard back after pasting |
 | `start_sound` / `stop_sound` / `warn_sound` / `error_sound` | Tink / Pop / Funk / Basso | Paths to sound files |
+| `tick_sound` / `tick_volume` / `tick_ms` | `builtin` / `0.25` / `200` | Quiet tick every `tick_ms` while waiting for the server. Use `builtin` for vox's own tiny click, a file path for a different sound, or `""` to turn it off |
 | `fallback_sound` | Purr | Plays when the first provider failed but a later one succeeded (`""` = silent) |
 | `speech_rms` / `min_speech_ms` | `400` / `200` | A recording needs at least `min_speech_ms` of 20 ms frames louder than `speech_rms`. Anything quieter counts as silent and is ignored. Each recording's level is logged so you can tune these |
 | `no_speech_prob` | `0.6` | Groq: drop segments Whisper rates as probably not speech (`0` = off) |
