@@ -34,11 +34,11 @@ func logf(format string, a ...any) {
 	fmt.Fprintf(os.Stderr, "%s "+format+"\n", append([]any{time.Now().Format("15:04:05.000")}, a...)...)
 }
 
-func playSound(path string) {
+func playSound(path string, volume float64) {
 	if path == "" {
 		return
 	}
-	nativeSound(path, 1, false)
+	nativeSound(path, float32(volume), false)
 }
 
 func main() {
@@ -127,10 +127,10 @@ func loop() {
 			cfg = loadConfig()
 			if s := audioStart(); s != 0 {
 				logf("audio start failed: OSStatus %d (microphone permission?)", s)
-				playSound(cfg.ErrorSound)
+				playSound(cfg.ErrorSound, cfg.ErrorVolume)
 				continue
 			}
-			playSound(cfg.StartSound) // immediately, even if this turns out to be a tap
+			playSound(cfg.StartSound, cfg.StartVolume) // immediately, even if this turns out to be a tap
 			st = pending
 			t0 = time.Now()
 			clear()
@@ -147,7 +147,7 @@ func loop() {
 			}
 
 		case e == evWarn && st == recording:
-			playSound(cfg.WarnSound)
+			playSound(cfg.WarnSound, cfg.WarnVolume)
 
 		case (e == evFnUp || e == evOtherKey) && st == pending:
 			clear()
@@ -170,7 +170,7 @@ func loop() {
 			clear()
 			audioStop()
 			logf("cancelled (key pressed while holding Fn)")
-			playSound(cfg.ErrorSound)
+			playSound(cfg.ErrorSound, cfg.ErrorVolume)
 			st = idle
 
 		case (e == evFnUp || e == evMax) && st == recording:
@@ -180,7 +180,7 @@ func loop() {
 			}
 			time.Sleep(time.Duration(cfg.TailMs) * time.Millisecond) // catch the last syllable
 			pcm := audioStop()
-			playSound(cfg.StopSound)
+			playSound(cfg.StopSound, cfg.StopVolume)
 			logf("recorded %.1fs", time.Since(t0).Seconds())
 			st = idle
 			jobs <- job{pcm: pcm, cfg: cfg, gen: jobGen.Load()}
@@ -251,7 +251,7 @@ func worker(jobs <-chan job) {
 			}
 			if err != nil {
 				logf("%v", err)
-				playSound(cfg.ErrorSound)
+				playSound(cfg.ErrorSound, cfg.ErrorVolume)
 				continue
 			}
 			text = cfg.applyReplacements(strings.TrimSpace(t))
@@ -277,7 +277,7 @@ func worker(jobs <-chan job) {
 			restore = 800
 		}
 		paste(text, restore)
-		playSound(cfg.SuccessSound)
+		playSound(cfg.SuccessSound, cfg.SuccessVolume)
 	}
 }
 

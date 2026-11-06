@@ -145,6 +145,7 @@ cp config.example.yaml ~/.config/vox/config.yaml
 | `restore_clipboard` | `true` | Put the previous clipboard back after pasting |
 | `start_sound` / `stop_sound` / `warn_sound` / `error_sound` | Tink / Pop / Funk / Basso | Paths to sound files |
 | `tick_sound` / `tick_volume` / `tick_ms` | `builtin` / `0.25` / `200` | Quiet tick every `tick_ms` while waiting for the server. Use `builtin` for vox's own tiny click, a file path for a different sound, or `""` to turn it off |
+| `start_volume` / `stop_volume` / `warn_volume` / `error_volume` / `success_volume` / `fallback_volume` | `1` | Volume of each sound, from 0 to 1 (`tick_volume` covers the tick) |
 | `success_sound` | none | Plays after each paste |
 | `fallback_sound` | Purr | Plays as soon as a provider fails and vox moves on to the next one (`""` = silent) |
 | `speech_rms` / `min_speech_ms` | `400` / `200` | A recording needs at least `min_speech_ms` of 20 ms frames louder than `speech_rms`. Anything quieter counts as silent and is ignored. Each recording's level is logged so you can tune these |

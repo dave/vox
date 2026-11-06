@@ -23,6 +23,13 @@ warn_sound:  /System/Library/Sounds/Funk.aiff
 error_sound: /System/Library/Sounds/Basso.aiff
 success_sound: ""       # after each paste ("" = silent)
 fallback_sound: /System/Library/Sounds/Purr.aiff   # a provider failed and vox is trying the next ("" = silent)
+# Volume per sound, 0..1 (default 1). Relative to your system output volume.
+start_volume: 1
+stop_volume: 1
+warn_volume: 1
+error_volume: 1
+success_volume: 1
+fallback_volume: 1
 tick_sound: builtin     # quiet tick while waiting for the server: "builtin", a file path, or "" = off
 tick_volume: 0.25       # 0..1, relative to the other sounds
 tick_ms: 200

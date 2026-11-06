@@ -36,6 +36,12 @@ type Config struct {
 	ErrorSound       string        `yaml:"error_sound"`
 	SuccessSound     string        `yaml:"success_sound"`
 	FallbackSound    string        `yaml:"fallback_sound"`
+	StartVolume      float64       `yaml:"start_volume"`
+	StopVolume       float64       `yaml:"stop_volume"`
+	WarnVolume       float64       `yaml:"warn_volume"`
+	ErrorVolume      float64       `yaml:"error_volume"`
+	SuccessVolume    float64       `yaml:"success_volume"`
+	FallbackVolume   float64       `yaml:"fallback_volume"`
 	TickSound        string        `yaml:"tick_sound"`
 	TickVolume       float64       `yaml:"tick_volume"`
 	TickMs           int           `yaml:"tick_ms"`
@@ -70,6 +76,12 @@ func defaults() Config {
 		WarnSound:        "/System/Library/Sounds/Funk.aiff",
 		ErrorSound:       "/System/Library/Sounds/Basso.aiff",
 		FallbackSound:    "/System/Library/Sounds/Purr.aiff",
+		StartVolume:      1,
+		StopVolume:       1,
+		WarnVolume:       1,
+		ErrorVolume:      1,
+		SuccessVolume:    1,
+		FallbackVolume:   1,
 		TickSound:        "builtin",
 		TickVolume:       0.25,
 		TickMs:           200,
@@ -99,7 +111,7 @@ func loadConfig() Config {
 			return c
 		}
 		logf("config error (using previous): %v", err)
-		playSound(c.ErrorSound)
+		playSound(c.ErrorSound, c.ErrorVolume)
 		if lastGood != nil {
 			return *lastGood
 		}
