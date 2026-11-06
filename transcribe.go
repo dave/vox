@@ -110,13 +110,13 @@ func transcribe(parent context.Context, cfg Config, audio []byte) (string, error
 		}
 		if err == nil {
 			logf("%s/%s ok in %v", p.Type, p.Model, time.Since(t0).Round(time.Millisecond))
-			if i > 0 {
-				playSound(cfg.FallbackSound)
-			}
 			return text, nil
 		}
 		logf("%s/%s failed in %v: %v", p.Type, p.Model, time.Since(t0).Round(time.Millisecond), err)
 		errs = append(errs, err.Error())
+		if i < len(cfg.Providers)-1 {
+			playSound(cfg.FallbackSound) // failing over to the next provider
+		}
 	}
 	return "", fmt.Errorf("all providers failed: %s", strings.Join(errs, "; "))
 }

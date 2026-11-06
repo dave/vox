@@ -22,7 +22,7 @@ stop_sound:  /System/Library/Sounds/Pop.aiff
 warn_sound:  /System/Library/Sounds/Funk.aiff
 error_sound: /System/Library/Sounds/Basso.aiff
 success_sound: ""       # after each paste ("" = silent)
-fallback_sound: /System/Library/Sounds/Purr.aiff   # a provider other than the first succeeded ("" = silent)
+fallback_sound: /System/Library/Sounds/Purr.aiff   # a provider failed and vox is trying the next ("" = silent)
 tick_sound: builtin     # quiet tick while waiting for the server: "builtin", a file path, or "" = off
 tick_volume: 0.25       # 0..1, relative to the other sounds
 tick_ms: 200
