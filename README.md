@@ -8,8 +8,7 @@ transcript is pasted into whatever app has focus.
   still open the emoji picker, and Fn + another key cancels the recording.
 - Release Fn to stop. The audio is transcribed and pasted via the clipboard,
   then your previous clipboard contents are restored.
-- If a recording is silent (or comes back empty), vox pastes your previous
-  dictation again. Hold Fn without speaking to repeat the last thing you said.
+- Silent recordings are ignored: they aren't sent, and nothing is pasted.
 - Starting a new dictation cancels any earlier one still being transcribed, so
   a slow response can't paste after your newer dictation.
 - Double-tap Fn to paste your previous dictation again.
@@ -145,7 +144,7 @@ cp config.example.yaml ~/.config/vox/config.yaml
 | `restore_clipboard` | `true` | Put the previous clipboard back after pasting |
 | `start_sound` / `stop_sound` / `warn_sound` / `error_sound` | Tink / Pop / Funk / Basso | Paths to sound files |
 | `fallback_sound` | Purr | Plays when the first provider failed but a later one succeeded (`""` = silent) |
-| `speech_rms` / `min_speech_ms` | `400` / `200` | A recording needs at least `min_speech_ms` of 20 ms frames louder than `speech_rms`. Anything quieter counts as silent: it isn't sent, and the previous dictation is pasted instead. Each recording's level is logged so you can tune these |
+| `speech_rms` / `min_speech_ms` | `400` / `200` | A recording needs at least `min_speech_ms` of 20 ms frames louder than `speech_rms`. Anything quieter counts as silent and is ignored. Each recording's level is logged so you can tune these |
 | `no_speech_prob` | `0.6` | Groq: drop segments Whisper rates as probably not speech (`0` = off) |
 | `prompt_max_chars` | `800` | Limit on the vocabulary prompt (Whisper allows about 224 tokens) |
 | `providers` | Groq large-v3, Groq turbo, Deepgram nova-3 | Fallback chain. Each entry has a `type` (`groq` or `deepgram`), a `model` and `timeout_seconds` |

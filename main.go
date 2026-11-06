@@ -211,7 +211,7 @@ func supersede() {
 func stale(j job) bool { return j.gen != jobGen.Load() }
 
 // worker transcribes sequentially so pastes stay in order.
-// A double tap, silent recording or empty transcript re-pastes the previous dictation.
+// A double tap (nil pcm) re-pastes the previous dictation.
 func worker(jobs <-chan job) {
 	var last string
 	for j := range jobs {
@@ -224,7 +224,8 @@ func worker(jobs <-chan job) {
 		if pcm == nil {
 			time.Sleep(150 * time.Millisecond) // let the emoji picker toggle settle
 		} else if cfg.silent(pcm) {
-			logf("silence")
+			logf("silence, skipping")
+			continue
 		} else {
 			cfg = loadConfig() // pick up dictionary edits made while recording
 			ctx, cancel := context.WithCancel(context.Background())
@@ -251,12 +252,13 @@ func worker(jobs <-chan job) {
 			text = cfg.applyReplacements(strings.TrimSpace(t))
 			if text == "" {
 				logf("empty transcript")
+				continue
 			}
 		}
 		if stale(j) {
 			continue
 		}
-		if text == "" {
+		if pcm == nil {
 			if last == "" {
 				continue
 			}

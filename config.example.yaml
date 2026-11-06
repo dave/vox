@@ -11,7 +11,7 @@ prompt_max_chars: 800   # Whisper prompt limit (~224 tokens)
 
 # Silence detection. Whisper hallucinates words on silent audio, so recordings
 # with less than min_speech_ms of audio louder than speech_rms aren't sent at all
-# (the previous dictation is re-pasted instead). The log prints each recording's
+# (nothing is pasted). The log prints each recording's
 # level, so you can tune these to your mic.
 speech_rms: 400         # 16-bit RMS per 20ms frame counted as speech
 min_speech_ms: 200
