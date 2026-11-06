@@ -34,6 +34,7 @@ type Config struct {
 	StopSound        string        `yaml:"stop_sound"`
 	WarnSound        string        `yaml:"warn_sound"`
 	ErrorSound       string        `yaml:"error_sound"`
+	SuccessSound     string        `yaml:"success_sound"`
 	FallbackSound    string        `yaml:"fallback_sound"`
 	TickSound        string        `yaml:"tick_sound"`
 	TickVolume       float64       `yaml:"tick_volume"`
