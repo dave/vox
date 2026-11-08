@@ -15,6 +15,7 @@ Minimal macOS push-to-talk dictation in Go, replacing Dave's TypeWhisper fork (~
 
 ## Files
 - `mac.m` / `mac.h` / `mac.go`: cgo layer (event tap, AudioQueue, pasteboard, permissions).
+- Logs go to stderr and are appended to ~/Library/Logs/vox.log (read it when debugging Dave's issues).
 - `main.go`: state machine (idle/pending/recording) and transcription worker.
 - `transcribe.go`: Groq/Deepgram clients, fallback chain, WAV encoding, API keys.
 - `config.go`: YAML config at `~/.config/vox/config.yaml` (override with `VOX_CONFIG`), re-read on every recording. Dave prefers YAML, not TOML.

@@ -30,8 +30,24 @@ const (
 
 func init() { runtime.LockOSThread() } // Cocoa run loop must own the main thread
 
+var (
+	logMu   sync.Mutex
+	logFile *os.File // ~/Library/Logs/vox.log, in addition to stderr
+)
+
 func logf(format string, a ...any) {
-	fmt.Fprintf(os.Stderr, "%s "+format+"\n", append([]any{time.Now().Format("15:04:05.000")}, a...)...)
+	line := fmt.Sprintf("%s "+format+"\n", append([]any{time.Now().Format("15:04:05.000")}, a...)...)
+	logMu.Lock()
+	defer logMu.Unlock()
+	os.Stderr.WriteString(line)
+	if logFile == nil {
+		if home, err := os.UserHomeDir(); err == nil {
+			logFile, _ = os.OpenFile(filepath.Join(home, "Library", "Logs", "vox.log"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+		}
+	}
+	if logFile != nil {
+		logFile.WriteString(line)
+	}
 }
 
 func playSound(path string, volume float64) {
