@@ -95,3 +95,15 @@ func nativeSound(path string, volume float32, preload bool) {
 func goLog(msg *C.char) {
 	logf("%s", C.GoString(msg))
 }
+
+func typeText(text string) {
+	cs := C.CString(text)
+	defer C.free(unsafe.Pointer(cs))
+	C.dw_type(cs)
+}
+
+func frontmostApp() string {
+	p := C.dw_frontmost_app()
+	defer C.free(unsafe.Pointer(p))
+	return C.GoString(p)
+}

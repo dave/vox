@@ -30,6 +30,7 @@ type Config struct {
 	WarnSeconds      int           `yaml:"warn_seconds"`
 	MaxSeconds       int           `yaml:"max_seconds"`
 	RestoreClipboard bool          `yaml:"restore_clipboard"`
+	TypeApps         []string      `yaml:"type_apps"`
 	StartSound       string        `yaml:"start_sound"`
 	StopSound        string        `yaml:"stop_sound"`
 	WarnSound        string        `yaml:"warn_sound"`
@@ -170,6 +171,17 @@ func (c Config) silent(pcm []byte) bool {
 	ms, maxRMS := speechMs(pcm, c.SpeechRMS)
 	logf("level: %dms above speech_rms %.0f (loudest frame %d)", ms, c.SpeechRMS, maxRMS)
 	return ms < c.MinSpeechMs
+}
+
+// shouldType reports whether text for the frontmost app should be typed
+// rather than pasted.
+func (c Config) shouldType(app string) bool {
+	for _, a := range c.TypeApps {
+		if a == "*" || strings.EqualFold(a, app) {
+			return true
+		}
+	}
+	return false
 }
 
 func (c Config) String() string {

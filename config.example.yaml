@@ -6,6 +6,10 @@ double_tap_ms: 400      # two Fn taps this close together re-paste the last dict
 tail_ms: 250            # keep recording briefly after Fn release
 warn_seconds: 25        # warning beep
 max_seconds: 30         # auto-stop and transcribe (0 = no limit)
+# Apps (by name, as shown in the Dock) where vox types the text as keystrokes
+# instead of pasting. "*" = everywhere. Slower for long text, but doesn't touch
+# the clipboard and avoids apps that drop synthetic pastes.
+type_apps: []
 restore_clipboard: false # true = put the old clipboard back after pasting (can make pastes unreliable)
 prompt_max_chars: 800   # Whisper prompt limit (~224 tokens)
 

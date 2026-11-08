@@ -258,3 +258,33 @@ void dw_play_sound(const char *path, float volume, int preload_only) {
         [s play];
     });
 }
+
+// Types text as synthetic Unicode key events (no clipboard involved).
+void dw_type(const char *text) {
+    NSString *str = [NSString stringWithUTF8String:text];
+    NSString *app = NSWorkspace.sharedWorkspace.frontmostApplication.localizedName ?: @"?";
+    plog(@"type: typing %lu chars into %@", (unsigned long)str.length, app);
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INTERACTIVE, 0), ^{
+        const NSUInteger chunk = 16; // max UTF-16 units most apps accept per event
+        for (NSUInteger i = 0; i < str.length; i += chunk) {
+            NSRange r = [str rangeOfComposedCharacterSequencesForRange:NSMakeRange(i, MIN(chunk, str.length - i))];
+            UniChar buf[64];
+            [str getCharacters:buf range:r];
+            CGEventRef d = CGEventCreateKeyboardEvent(NULL, 0, true);
+            CGEventRef u = CGEventCreateKeyboardEvent(NULL, 0, false);
+            CGEventSetFlags(d, 0); CGEventSetFlags(u, 0);
+            CGEventKeyboardSetUnicodeString(d, r.length, buf);
+            CGEventKeyboardSetUnicodeString(u, r.length, buf);
+            CGEventPost(kCGSessionEventTap, d);
+            CGEventPost(kCGSessionEventTap, u);
+            CFRelease(d); CFRelease(u);
+            usleep(3000);
+            i = r.location + r.length - chunk; // account for composed-sequence widening
+        }
+    });
+}
+
+char *dw_frontmost_app(void) {
+    NSString *n = NSWorkspace.sharedWorkspace.frontmostApplication.localizedName ?: @"";
+    return strdup(n.UTF8String);
+}

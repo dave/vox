@@ -292,7 +292,11 @@ func worker(jobs <-chan job) {
 		if cfg.RestoreClipboard {
 			restore = 800
 		}
-		paste(text, restore)
+		if cfg.shouldType(frontmostApp()) {
+			typeText(text)
+		} else {
+			paste(text, restore)
+		}
 		playSound(cfg.SuccessSound, cfg.SuccessVolume)
 	}
 }

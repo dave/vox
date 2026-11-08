@@ -143,6 +143,7 @@ cp config.example.yaml ~/.config/vox/config.yaml
 | `tail_ms` | `250` | How long to keep recording after Fn is released |
 | `warn_seconds` | `25` | When the warning sound plays |
 | `max_seconds` | `30` | When recording auto-stops (`0` = no limit) |
+| `type_apps` | none | Apps (by name, e.g. `Google Chrome`) where vox types the text as keystrokes instead of pasting it. `"*"` means every app |
 | `restore_clipboard` | `false` | Put the previous clipboard back after pasting. Off by default because restoring it too early can make some apps, such as Chrome, paste nothing |
 | `start_sound` / `stop_sound` / `warn_sound` / `error_sound` | Tink / Pop / Funk / Basso | Paths to sound files |
 | `tick_sound` / `tick_volume` / `tick_ms` | `builtin` / `0.25` / `200` | Quiet tick every `tick_ms` while waiting for the server. Use `builtin` for vox's own tiny click, a file path for a different sound, or `""` to turn it off |
