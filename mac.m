@@ -1,6 +1,7 @@
 #import <Cocoa/Cocoa.h>
 #import <AudioToolbox/AudioToolbox.h>
 #import <ApplicationServices/ApplicationServices.h>
+#include <unistd.h>
 #include "mac.h"
 #include "_cgo_export.h"
 
@@ -103,15 +104,23 @@ void dw_audio_stop(void) {
 
 // ---------- paste via clipboard + Cmd-V ----------
 
+static void postKey(CGEventSourceRef src, CGKeyCode k, bool down, CGEventFlags f) {
+    CGEventRef e = CGEventCreateKeyboardEvent(src, k, down);
+    CGEventSetFlags(e, f);
+    CGEventPost(kCGHIDEventTap, e);
+    CFRelease(e);
+    usleep(8000); // some apps (Electron, browsers) drop keys that arrive in the same instant
+}
+
+// Full Cmd-down, V-down, V-up, Cmd-up sequence from a private source, so the
+// physical modifier state (e.g. Fn still settling) doesn't leak into it.
 static void postCmdV(void) {
-    CGEventSourceRef src = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
-    CGEventRef d = CGEventCreateKeyboardEvent(src, 9 /* kVK_ANSI_V */, true);
-    CGEventRef u = CGEventCreateKeyboardEvent(src, 9, false);
-    CGEventSetFlags(d, kCGEventFlagMaskCommand);
-    CGEventSetFlags(u, kCGEventFlagMaskCommand);
-    CGEventPost(kCGHIDEventTap, d);
-    CGEventPost(kCGHIDEventTap, u);
-    CFRelease(d); CFRelease(u); CFRelease(src);
+    CGEventSourceRef src = CGEventSourceCreate(kCGEventSourceStatePrivate);
+    postKey(src, 55 /* kVK_Command */, true, kCGEventFlagMaskCommand);
+    postKey(src, 9 /* kVK_ANSI_V */, true, kCGEventFlagMaskCommand);
+    postKey(src, 9, false, kCGEventFlagMaskCommand);
+    postKey(src, 55, false, 0);
+    CFRelease(src);
 }
 
 void dw_paste(const char *text, int restore_delay_ms) {
@@ -132,15 +141,20 @@ void dw_paste(const char *text, int restore_delay_ms) {
         [pb clearContents];
         [pb setString:str forType:NSPasteboardTypeString];
         NSInteger cc = pb.changeCount;
-        postCmdV();
-        if (restore_delay_ms > 0) {
+        NSString *app = NSWorkspace.sharedWorkspace.frontmostApplication.localizedName ?: @"?";
+        goPasteLog((char *)app.UTF8String, (int)saved.count);
+        // Let the pasteboard change propagate before the target app reads it.
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 40 * NSEC_PER_MSEC),
+                       dispatch_get_global_queue(QOS_CLASS_USER_INTERACTIVE, 0), ^{
+            postCmdV();
+            if (restore_delay_ms <= 0) return;
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)restore_delay_ms * NSEC_PER_MSEC),
                            dispatch_get_main_queue(), ^{
                 if (pb.changeCount != cc) return; // someone else copied meanwhile
                 [pb clearContents];
                 if (saved.count) [pb writeObjects:saved];
             });
-        }
+        });
     });
 }
 
