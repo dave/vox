@@ -30,7 +30,8 @@ type Config struct {
 	WarnSeconds      int           `yaml:"warn_seconds"`
 	MaxSeconds       int           `yaml:"max_seconds"`
 	RestoreClipboard bool          `yaml:"restore_clipboard"`
-	TypeApps         []string      `yaml:"type_apps"`
+	Insert           string        `yaml:"insert"`     // "type" (default) or "paste"
+	PasteApps        []string      `yaml:"paste_apps"` // apps that always get paste
 	StartSound       string        `yaml:"start_sound"`
 	StopSound        string        `yaml:"stop_sound"`
 	WarnSound        string        `yaml:"warn_sound"`
@@ -72,6 +73,7 @@ func defaults() Config {
 		WarnSeconds:      25,
 		MaxSeconds:       30,
 		RestoreClipboard: false,
+		Insert:           "type",
 		StartSound:       "/System/Library/Sounds/Tink.aiff",
 		StopSound:        "/System/Library/Sounds/Pop.aiff",
 		WarnSound:        "/System/Library/Sounds/Funk.aiff",
@@ -174,14 +176,14 @@ func (c Config) silent(pcm []byte) bool {
 }
 
 // shouldType reports whether text for the frontmost app should be typed
-// rather than pasted.
+// as keystrokes rather than pasted via the clipboard.
 func (c Config) shouldType(app string) bool {
-	for _, a := range c.TypeApps {
-		if a == "*" || strings.EqualFold(a, app) {
-			return true
+	for _, a := range c.PasteApps {
+		if strings.EqualFold(a, app) {
+			return false
 		}
 	}
-	return false
+	return c.Insert != "paste"
 }
 
 func (c Config) String() string {
