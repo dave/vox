@@ -104,24 +104,74 @@ void dw_audio_stop(void) {
 
 // ---------- paste via clipboard + Cmd-V ----------
 
-static void postKey(CGEventSourceRef src, CGKeyCode k, bool down, CGEventFlags f) {
-    CGEventRef e = CGEventCreateKeyboardEvent(src, k, down);
-    CGEventSetFlags(e, f);
-    CGEventPost(kCGHIDEventTap, e);
-    CFRelease(e);
-    usleep(8000); // some apps (Electron, browsers) drop keys that arrive in the same instant
+// Same as TypeWhisper (which never dropped pastes): no event source, plain
+// V down/up with the Command flag, posted at the session level.
+static void postCmdV(void) {
+    CGEventRef d = CGEventCreateKeyboardEvent(NULL, 9 /* kVK_ANSI_V */, true);
+    CGEventRef u = CGEventCreateKeyboardEvent(NULL, 9, false);
+    CGEventSetFlags(d, kCGEventFlagMaskCommand);
+    CGEventSetFlags(u, kCGEventFlagMaskCommand);
+    CGEventPost(kCGSessionEventTap, d);
+    CGEventPost(kCGSessionEventTap, u);
+    CFRelease(d); CFRelease(u);
 }
 
-// Full Cmd-down, V-down, V-up, Cmd-up sequence from a private source, so the
-// physical modifier state (e.g. Fn still settling) doesn't leak into it.
-static void postCmdV(void) {
-    CGEventSourceRef src = CGEventSourceCreate(kCGEventSourceStatePrivate);
-    postKey(src, 55 /* kVK_Command */, true, kCGEventFlagMaskCommand);
-    postKey(src, 9 /* kVK_ANSI_V */, true, kCGEventFlagMaskCommand);
-    postKey(src, 9, false, kCGEventFlagMaskCommand);
-    postKey(src, 55, false, 0);
-    CFRelease(src);
+static void plog(NSString *fmt, ...) NS_FORMAT_FUNCTION(1,2);
+static void plog(NSString *fmt, ...) {
+    va_list ap; va_start(ap, fmt);
+    NSString *m = [[NSString alloc] initWithFormat:fmt arguments:ap];
+    va_end(ap);
+    goLog((char *)m.UTF8String);
 }
+
+// Describes the focused UI element (via Accessibility): role and owning app.
+static NSString *focusInfo(void) {
+    AXUIElementRef sys = AXUIElementCreateSystemWide();
+    CFTypeRef el = NULL;
+    AXError err = AXUIElementCopyAttributeValue(sys, kAXFocusedUIElementAttribute, &el);
+    CFRelease(sys);
+    if (err != kAXErrorSuccess || !el) return [NSString stringWithFormat:@"focus=? (AX error %d)", (int)err];
+    CFTypeRef role = NULL;
+    AXUIElementCopyAttributeValue(el, kAXRoleAttribute, &role);
+    pid_t pid = 0;
+    AXUIElementGetPid(el, &pid);
+    NSString *app = [NSRunningApplication runningApplicationWithProcessIdentifier:pid].localizedName ?: @"?";
+    NSString *r = [NSString stringWithFormat:@"focus=%@ in %@", role ? (__bridge NSString *)role : @"?", app];
+    if (role) CFRelease(role);
+    CFRelease(el);
+    return r;
+}
+
+static NSString *modsInfo(void) {
+    CGEventFlags f = CGEventSourceFlagsState(kCGEventSourceStateHIDSystemState);
+    NSMutableArray *m = [NSMutableArray array];
+    if (f & kCGEventFlagMaskSecondaryFn) [m addObject:@"fn"];
+    if (f & kCGEventFlagMaskCommand) [m addObject:@"cmd"];
+    if (f & kCGEventFlagMaskShift) [m addObject:@"shift"];
+    if (f & kCGEventFlagMaskAlternate) [m addObject:@"opt"];
+    if (f & kCGEventFlagMaskControl) [m addObject:@"ctrl"];
+    return m.count ? [m componentsJoinedByString:@"+"] : @"none";
+}
+
+// Supplies the dictated text lazily, so we can log when (and whether) an app
+// actually reads the clipboard. A read shortly after Cmd-V means the paste landed.
+@interface VoxProvider : NSObject <NSPasteboardItemDataProvider>
+@property (copy) NSString *text;
+@property CFAbsoluteTime posted;
+@property int reads;
+@end
+@implementation VoxProvider
+- (void)pasteboard:(NSPasteboard *)pb item:(NSPasteboardItem *)item provideDataForType:(NSPasteboardType)type {
+    self.reads++;
+    double ms = self.posted ? (CFAbsoluteTimeGetCurrent() - self.posted) * 1000 : -1;
+    plog(@"paste: clipboard read #%d (%@) %.0fms after Cmd-V; frontmost=%@", self.reads, type, ms,
+         NSWorkspace.sharedWorkspace.frontmostApplication.localizedName);
+    [item setString:self.text forType:type];
+}
+- (void)pasteboardFinishedWithDataProvider:(NSPasteboard *)pb {}
+@end
+
+static VoxProvider *provider; // keep alive while it owns the pasteboard
 
 void dw_paste(const char *text, int restore_delay_ms) {
     NSString *str = [NSString stringWithUTF8String:text];
@@ -131,28 +181,55 @@ void dw_paste(const char *text, int restore_delay_ms) {
         if (restore_delay_ms > 0) {
             for (NSPasteboardItem *it in pb.pasteboardItems) {
                 NSPasteboardItem *c = [NSPasteboardItem new];
+                NSMutableArray *missing = [NSMutableArray array];
                 for (NSString *t in it.types) {
                     NSData *data = [it dataForType:t];
                     if (data) [c setData:data forType:t];
+                    else [missing addObject:t];
                 }
+                if (missing.count) plog(@"paste: couldn't save clipboard types %@", missing);
                 [saved addObject:c];
             }
         }
+        provider = [VoxProvider new];
+        provider.text = str;
+        NSPasteboardItem *item = [NSPasteboardItem new];
+        [item setDataProvider:provider forTypes:@[NSPasteboardTypeString]];
         [pb clearContents];
-        [pb setString:str forType:NSPasteboardTypeString];
+        BOOL ok = [pb writeObjects:@[item]];
         NSInteger cc = pb.changeCount;
         NSString *app = NSWorkspace.sharedWorkspace.frontmostApplication.localizedName ?: @"?";
-        goPasteLog((char *)app.UTF8String, (int)saved.count);
+        plog(@"paste: clipboard set (ok=%d, change %ld), saved %lu old item(s); frontmost=%@, %@, mods=%@",
+             ok, (long)cc, (unsigned long)saved.count, app, focusInfo(), modsInfo());
+        VoxProvider *p = provider;
         // Let the pasteboard change propagate before the target app reads it.
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 40 * NSEC_PER_MSEC),
                        dispatch_get_global_queue(QOS_CLASS_USER_INTERACTIVE, 0), ^{
+            plog(@"paste: posting Cmd-V; frontmost=%@, mods=%@",
+                 NSWorkspace.sharedWorkspace.frontmostApplication.localizedName, modsInfo());
+            p.posted = CFAbsoluteTimeGetCurrent();
             postCmdV();
-            if (restore_delay_ms <= 0) return;
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)restore_delay_ms * NSEC_PER_MSEC),
+            int delay = restore_delay_ms > 0 ? restore_delay_ms : 1500;
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)delay * NSEC_PER_MSEC),
                            dispatch_get_main_queue(), ^{
-                if (pb.changeCount != cc) return; // someone else copied meanwhile
+                if (p.reads == 0)
+                    plog(@"paste: WARNING nothing read the clipboard within %dms of Cmd-V — the paste probably didn't land", delay);
+                if (restore_delay_ms <= 0) {
+                    // Replace the lazy promise with real data, so the text stays
+                    // on the clipboard even after vox quits.
+                    if (pb.changeCount == cc) {
+                        [pb clearContents];
+                        [pb setString:p.text forType:NSPasteboardTypeString];
+                    }
+                    return;
+                }
+                if (pb.changeCount != cc) {
+                    plog(@"paste: clipboard changed by someone else, not restoring");
+                    return;
+                }
                 [pb clearContents];
-                if (saved.count) [pb writeObjects:saved];
+                BOOL rok = saved.count ? [pb writeObjects:saved] : YES;
+                plog(@"paste: restored previous clipboard (ok=%d)", rok);
             });
         });
     });

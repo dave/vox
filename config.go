@@ -70,7 +70,7 @@ func defaults() Config {
 		TailMs:           250,
 		WarnSeconds:      25,
 		MaxSeconds:       30,
-		RestoreClipboard: true,
+		RestoreClipboard: false,
 		StartSound:       "/System/Library/Sounds/Tink.aiff",
 		StopSound:        "/System/Library/Sounds/Pop.aiff",
 		WarnSound:        "/System/Library/Sounds/Funk.aiff",

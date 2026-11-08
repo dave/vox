@@ -7,7 +7,8 @@ transcript is pasted into whatever app has focus.
   dictate (`min_hold_ms`); a quick tap also beeps but is otherwise ignored. Quick Fn taps
   still open the emoji picker, and Fn + another key cancels the recording.
 - Release Fn to stop. The audio is transcribed and pasted via the clipboard,
-  then your previous clipboard contents are restored.
+  and the text is left on the clipboard (set `restore_clipboard: true` to put the
+  previous clipboard back, though that can make pastes unreliable in some apps).
 - Silent recordings are ignored: they aren't sent, and nothing is pasted.
 - While vox waits for the server, a quiet tick plays every 200 ms.
 - Starting a new dictation cancels any earlier one still being transcribed, so
@@ -142,7 +143,7 @@ cp config.example.yaml ~/.config/vox/config.yaml
 | `tail_ms` | `250` | How long to keep recording after Fn is released |
 | `warn_seconds` | `25` | When the warning sound plays |
 | `max_seconds` | `30` | When recording auto-stops (`0` = no limit) |
-| `restore_clipboard` | `true` | Put the previous clipboard back after pasting |
+| `restore_clipboard` | `false` | Put the previous clipboard back after pasting. Off by default because restoring it too early can make some apps, such as Chrome, paste nothing |
 | `start_sound` / `stop_sound` / `warn_sound` / `error_sound` | Tink / Pop / Funk / Basso | Paths to sound files |
 | `tick_sound` / `tick_volume` / `tick_ms` | `builtin` / `0.25` / `200` | Quiet tick every `tick_ms` while waiting for the server. Use `builtin` for vox's own tiny click, a file path for a different sound, or `""` to turn it off |
 | `start_volume` / `stop_volume` / `warn_volume` / `error_volume` / `success_volume` / `fallback_volume` | `1` | Volume of each sound, from 0 to 1 (`tick_volume` covers the tick) |

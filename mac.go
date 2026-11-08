@@ -91,7 +91,7 @@ func nativeSound(path string, volume float32, preload bool) {
 	C.dw_play_sound(cs, C.float(volume), p)
 }
 
-//export goPasteLog
-func goPasteLog(app *C.char, savedItems C.int) {
-	logf("pasting into %s (saved %d clipboard item(s) to restore)", C.GoString(app), int(savedItems))
+//export goLog
+func goLog(msg *C.char) {
+	logf("%s", C.GoString(msg))
 }
