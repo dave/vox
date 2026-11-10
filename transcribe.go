@@ -221,3 +221,36 @@ func doJSON(req *http.Request, v any) error {
 	}
 	return json.Unmarshal(b, v)
 }
+
+var providerHosts = map[string]string{
+	"groq":     "https://api.groq.com/",
+	"deepgram": "https://api.deepgram.com/",
+}
+
+// prewarm opens (or refreshes) a pooled connection to each configured
+// provider while the user is still talking, so DNS, TCP and TLS are done by
+// the time the audio is ready. On a slow link this saves several seconds.
+func prewarm(cfg Config) {
+	seen := map[string]bool{}
+	for _, p := range cfg.Providers {
+		u := providerHosts[p.Type]
+		if u == "" || seen[u] {
+			continue
+		}
+		seen[u] = true
+		go func(u string) {
+			t0 := time.Now()
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			req, _ := http.NewRequestWithContext(ctx, "HEAD", u, nil)
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				logf("prewarm %s failed in %v: %v", u, time.Since(t0).Round(time.Millisecond), err)
+				return
+			}
+			io.Copy(io.Discard, resp.Body)
+			resp.Body.Close()
+			logf("prewarm %s ready in %v", u, time.Since(t0).Round(time.Millisecond))
+		}(u)
+	}
+}

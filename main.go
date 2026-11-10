@@ -155,6 +155,7 @@ func loop() {
 		case e == evHoldReached && st == pending:
 			st = recording
 			supersede() // a new dictation makes any in-flight one stale
+			go prewarm(cfg) // connect to the providers while the user talks
 			if cfg.WarnSeconds > 0 {
 				after(time.Duration(cfg.WarnSeconds)*time.Second, evWarn, gen)
 			}

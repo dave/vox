@@ -10,6 +10,7 @@ Minimal macOS push-to-talk dictation in Go, replacing Dave's TypeWhisper fork (~
 - Starting a new hold supersedes older dictations: in-flight HTTP is cancelled (no fallback) and queued jobs are dropped. Double tap does not supersede; it queues and repeats the latest.
 - While waiting on the server: quiet synthesized tick (tick_sound: builtin → ~/Library/Caches/vox/tick.wav) every tick_ms=200 at tick_volume=0.25; first tick after one interval.
 - 25s warning sound, 30s auto-stop (transcribes, doesn't discard).
+- When a hold is confirmed, prewarm() HEADs each provider host so DNS/TCP/TLS are pooled before upload (saved ~3s per dictation on a slow travel eSIM).
 - Providers tried in order: Groq whisper-large-v3 → Groq whisper-large-v3-turbo → Deepgram nova-3. large-v3 stays first: in testing it was ~500ms vs ~700ms for turbo, and more accurate.
 - Every provider error is logged to stderr with timing; each failover to the next provider immediately plays fallback_sound (Purr); if all fail, Basso.
 
