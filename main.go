@@ -154,7 +154,6 @@ func loop() {
 
 		case e == evHoldReached && st == pending:
 			st = recording
-			supersede() // a new dictation makes any in-flight one stale
 			go prewarm(cfg) // connect to the providers while the user talks
 			if cfg.WarnSeconds > 0 {
 				after(time.Duration(cfg.WarnSeconds)*time.Second, evWarn, gen)
@@ -200,6 +199,13 @@ func loop() {
 			playSound(cfg.StopSound, cfg.StopVolume)
 			logf("recorded %.1fs", time.Since(t0).Seconds())
 			st = idle
+			// Silent holds are dropped here, before they can supersede an
+			// earlier dictation that is still being transcribed.
+			if cfg.silent(pcm) {
+				logf("silence, skipping")
+				continue
+			}
+			supersede() // a new dictation makes any in-flight one stale
 			jobs <- job{pcm: pcm, cfg: cfg, gen: jobGen.Load()}
 		}
 	}
@@ -243,9 +249,6 @@ func worker(jobs <-chan job) {
 		var text string
 		if pcm == nil {
 			time.Sleep(150 * time.Millisecond) // let the emoji picker toggle settle
-		} else if cfg.silent(pcm) {
-			logf("silence, skipping")
-			continue
 		} else {
 			cfg = loadConfig() // pick up dictionary edits made while recording
 			ctx, cancel := context.WithCancel(context.Background())

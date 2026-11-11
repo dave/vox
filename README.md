@@ -11,8 +11,8 @@ transcript is pasted into whatever app has focus.
   clipboard and Cmd-V instead.)
 - Silent recordings are ignored: they aren't sent, and nothing is pasted.
 - While vox waits for the server, a quiet tick plays every 200 ms.
-- Starting a new dictation cancels any earlier one still being transcribed, so
-  a slow response can't paste after your newer dictation.
+- A new dictation cancels any earlier one still being transcribed, so a slow
+  response can't paste after your newer dictation. A silent hold cancels nothing.
 - Double-tap Fn to paste your previous dictation again.
 
   macOS's built-in Dictation also uses a double Fn press by default. To stop it
