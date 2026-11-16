@@ -260,12 +260,12 @@ void dw_play_sound(const char *path, float volume, int preload_only) {
 }
 
 // Types text as synthetic Unicode key events (no clipboard involved).
-void dw_type(const char *text) {
+void dw_type(const char *text, int chunk_in, int delay_ms) {
     NSString *str = [NSString stringWithUTF8String:text];
     NSString *app = NSWorkspace.sharedWorkspace.frontmostApplication.localizedName ?: @"?";
-    plog(@"type: typing %lu chars into %@", (unsigned long)str.length, app);
+    plog(@"type: typing %lu chars into %@ (%d per event, %dms apart)", (unsigned long)str.length, app, chunk_in, delay_ms);
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INTERACTIVE, 0), ^{
-        const NSUInteger chunk = 16; // max UTF-16 units most apps accept per event
+        const NSUInteger chunk = chunk_in < 1 ? 1 : (chunk_in > 16 ? 16 : chunk_in); // most apps accept up to 16 UTF-16 units per event
         for (NSUInteger i = 0; i < str.length; i += chunk) {
             NSRange r = [str rangeOfComposedCharacterSequencesForRange:NSMakeRange(i, MIN(chunk, str.length - i))];
             UniChar buf[64];
@@ -278,7 +278,7 @@ void dw_type(const char *text) {
             CGEventPost(kCGSessionEventTap, d);
             CGEventPost(kCGSessionEventTap, u);
             CFRelease(d); CFRelease(u);
-            usleep(3000);
+            usleep((useconds_t)(delay_ms < 0 ? 0 : delay_ms) * 1000);
             i = r.location + r.length - chunk; // account for composed-sequence widening
         }
     });

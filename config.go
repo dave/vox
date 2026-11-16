@@ -32,6 +32,10 @@ type Config struct {
 	RestoreClipboard bool          `yaml:"restore_clipboard"`
 	Insert           string        `yaml:"insert"`     // "type" (default) or "paste"
 	PasteApps        []string      `yaml:"paste_apps"` // apps that always get paste
+	TypeChunk        int           `yaml:"type_chunk"`    // characters per synthetic key event (1-16)
+	TypeDelayMs      int           `yaml:"type_delay_ms"` // gap between key events
+	SlowTypeApps     []string      `yaml:"slow_type_apps"` // apps that get 1 char per event, slow_type_delay_ms apart
+	SlowTypeDelayMs  int           `yaml:"slow_type_delay_ms"`
 	StartSound       string        `yaml:"start_sound"`
 	StopSound        string        `yaml:"stop_sound"`
 	WarnSound        string        `yaml:"warn_sound"`
@@ -74,6 +78,9 @@ func defaults() Config {
 		MaxSeconds:       30,
 		RestoreClipboard: false,
 		Insert:           "type",
+		TypeChunk:        16,
+		TypeDelayMs:      3,
+		SlowTypeDelayMs:  5,
 		StartSound:       "/System/Library/Sounds/Tink.aiff",
 		StopSound:        "/System/Library/Sounds/Pop.aiff",
 		WarnSound:        "/System/Library/Sounds/Funk.aiff",
@@ -184,6 +191,16 @@ func (c Config) shouldType(app string) bool {
 		}
 	}
 	return c.Insert != "paste"
+}
+
+// typeRate returns chunk size and delay for typing into app.
+func (c Config) typeRate(app string) (chunk, delayMs int) {
+	for _, a := range c.SlowTypeApps {
+		if strings.EqualFold(a, app) {
+			return 1, c.SlowTypeDelayMs
+		}
+	}
+	return c.TypeChunk, c.TypeDelayMs
 }
 
 func (c Config) String() string {

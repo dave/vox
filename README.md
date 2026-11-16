@@ -144,6 +144,8 @@ cp config.example.yaml ~/.config/vox/config.yaml
 | `warn_seconds` | `25` | When the warning sound plays |
 | `max_seconds` | `30` | When recording auto-stops (`0` = no limit) |
 | `insert` | `type` | `type` sends the text as keystrokes and leaves your clipboard alone. `paste` uses the clipboard and Cmd-V instead |
+| `type_chunk` / `type_delay_ms` | `16` / `3` | How many characters go in each synthetic key event, and the gap between events |
+| `slow_type_apps` / `slow_type_delay_ms` | none / `5` | Apps that drop characters (busy terminals, for example) get one character per event, this many ms apart |
 | `paste_apps` | none | Apps (by name, e.g. `Microsoft Word`) that should get paste even when `insert` is `type` |
 | `restore_clipboard` | `false` | When pasting, put the previous clipboard back afterwards. Off by default because restoring it too early can make some apps, such as Chrome, paste nothing |
 | `start_sound` / `stop_sound` / `warn_sound` / `error_sound` | Tink / Pop / Funk / Basso | Paths to sound files |

@@ -296,8 +296,9 @@ func worker(jobs <-chan job) {
 		if cfg.RestoreClipboard {
 			restore = 800
 		}
-		if cfg.shouldType(frontmostApp()) {
-			typeText(text)
+		if app := frontmostApp(); cfg.shouldType(app) {
+			chunk, delay := cfg.typeRate(app)
+			typeText(text, chunk, delay)
 		} else {
 			paste(text, restore)
 		}

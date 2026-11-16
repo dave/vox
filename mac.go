@@ -96,10 +96,10 @@ func goLog(msg *C.char) {
 	logf("%s", C.GoString(msg))
 }
 
-func typeText(text string) {
+func typeText(text string, chunk, delayMs int) {
 	cs := C.CString(text)
 	defer C.free(unsafe.Pointer(cs))
-	C.dw_type(cs)
+	C.dw_type(cs, C.int(chunk), C.int(delayMs))
 }
 
 func frontmostApp() string {

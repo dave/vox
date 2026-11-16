@@ -12,7 +12,7 @@ void dw_audio_stop(void);
 // Puts text on the clipboard, sends Cmd-V, optionally restores old clipboard after delay.
 void dw_paste(const char *text, int restore_delay_ms);
 // Types text as synthetic Unicode keystrokes instead of pasting.
-void dw_type(const char *text);
+void dw_type(const char *text, int chunk, int delay_ms);
 // Name of the frontmost app (caller frees).
 char *dw_frontmost_app(void);
 // Plays a sound file in-process (cached) at volume 0..1. preload_only=1 just loads it.

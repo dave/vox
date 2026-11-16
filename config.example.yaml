@@ -9,7 +9,11 @@ max_seconds: 30         # auto-stop and transcribe (0 = no limit)
 # How text goes in: "type" sends it as keystrokes (default; leaves your clipboard
 # alone and works reliably in Chrome), "paste" uses the clipboard + Cmd-V.
 insert: type
-paste_apps: []          # apps (name as in the Dock) that should get paste instead
+paste_apps: []
+type_chunk: 16          # characters per synthetic key event (1-16)
+type_delay_ms: 3        # gap between key events
+slow_type_apps: []      # apps that drop characters: typed 1 char at a time instead
+slow_type_delay_ms: 5          # apps (name as in the Dock) that should get paste instead
 restore_clipboard: false # paste only: put the old clipboard back afterwards (can make pastes unreliable)
 prompt_max_chars: 800   # Whisper prompt limit (~224 tokens)
 
