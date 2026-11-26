@@ -30,10 +30,10 @@ type Config struct {
 	WarnSeconds      int           `yaml:"warn_seconds"`
 	MaxSeconds       int           `yaml:"max_seconds"`
 	RestoreClipboard bool          `yaml:"restore_clipboard"`
-	Insert           string        `yaml:"insert"`     // "type" (default) or "paste"
-	PasteApps        []string      `yaml:"paste_apps"` // apps that always get paste
-	TypeChunk        int           `yaml:"type_chunk"`    // characters per synthetic key event (1-16)
-	TypeDelayMs      int           `yaml:"type_delay_ms"` // gap between key events
+	Insert           string        `yaml:"insert"`         // "type" (default) or "paste"
+	PasteApps        []string      `yaml:"paste_apps"`     // apps that always get paste
+	TypeChunk        int           `yaml:"type_chunk"`     // characters per synthetic key event (1-16)
+	TypeDelayMs      int           `yaml:"type_delay_ms"`  // gap between key events
 	SlowTypeApps     []string      `yaml:"slow_type_apps"` // apps that get 1 char per event, slow_type_delay_ms apart
 	SlowTypeDelayMs  int           `yaml:"slow_type_delay_ms"`
 	HerdrPaste       bool          `yaml:"herdr_paste"` // in Herdr, paste via `herdr-app do terminal.paste`

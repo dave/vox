@@ -2,7 +2,6 @@
 package main
 
 import (
-	"os/exec"
 	"context"
 	"encoding/binary"
 	"errors"
@@ -10,6 +9,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
