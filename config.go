@@ -36,6 +36,7 @@ type Config struct {
 	TypeDelayMs      int           `yaml:"type_delay_ms"` // gap between key events
 	SlowTypeApps     []string      `yaml:"slow_type_apps"` // apps that get 1 char per event, slow_type_delay_ms apart
 	SlowTypeDelayMs  int           `yaml:"slow_type_delay_ms"`
+	HerdrPaste       bool          `yaml:"herdr_paste"` // in Herdr, paste via `herdr-app do terminal.paste`
 	StartSound       string        `yaml:"start_sound"`
 	StopSound        string        `yaml:"stop_sound"`
 	WarnSound        string        `yaml:"warn_sound"`
@@ -81,6 +82,7 @@ func defaults() Config {
 		TypeChunk:        16,
 		TypeDelayMs:      3,
 		SlowTypeDelayMs:  5,
+		HerdrPaste:       true,
 		StartSound:       "/System/Library/Sounds/Tink.aiff",
 		StopSound:        "/System/Library/Sounds/Pop.aiff",
 		WarnSound:        "/System/Library/Sounds/Funk.aiff",

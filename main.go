@@ -2,6 +2,7 @@
 package main
 
 import (
+	"os/exec"
 	"context"
 	"encoding/binary"
 	"errors"
@@ -296,7 +297,9 @@ func worker(jobs <-chan job) {
 		if cfg.RestoreClipboard {
 			restore = 800
 		}
-		if app := frontmostApp(); cfg.shouldType(app) {
+		if app := frontmostApp(); cfg.HerdrPaste && app == "Herdr" && herdrPaste(text) {
+			// pasted by Herdr itself into the focused terminal (no Enter)
+		} else if cfg.shouldType(app) {
 			chunk, delay := cfg.typeRate(app)
 			typeText(text, chunk, delay)
 		} else {
@@ -358,4 +361,34 @@ func tickFile() string {
 	}
 	tickPath = p
 	return p
+}
+
+// herdrPaste puts text on the clipboard and asks Herdr to paste it into its
+// focused terminal (a real bracketed paste, no Enter), then puts the previous
+// plain-text clipboard back. Returns false if Herdr couldn't do it, so the
+// caller falls back to typing.
+func herdrPaste(text string) bool {
+	old, _ := exec.Command("pbpaste").Output()
+	set := func(s string) error {
+		c := exec.Command("pbcopy")
+		c.Stdin = strings.NewReader(s)
+		return c.Run()
+	}
+	if set(text) != nil {
+		return false
+	}
+	out, err := exec.Command("herdr-app", "do", "terminal.paste").CombinedOutput()
+	ok := err == nil && strings.Contains(string(out), `"ok": true`)
+	if ok {
+		logf("herdr: pasted %d chars into the focused terminal", len(text))
+	} else {
+		logf("herdr: paste failed (%v): %s", err, strings.TrimSpace(string(out)))
+	}
+	go func() {
+		time.Sleep(500 * time.Millisecond)
+		if cur, _ := exec.Command("pbpaste").Output(); string(cur) == text {
+			set(string(old))
+		}
+	}()
+	return ok
 }

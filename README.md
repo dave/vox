@@ -146,6 +146,7 @@ cp config.example.yaml ~/.config/vox/config.yaml
 | `insert` | `type` | `type` sends the text as keystrokes and leaves your clipboard alone. `paste` uses the clipboard and Cmd-V instead |
 | `type_chunk` / `type_delay_ms` | `16` / `3` | How many characters go in each synthetic key event, and the gap between events |
 | `slow_type_apps` / `slow_type_delay_ms` | none / `5` | Apps that drop characters (busy terminals, for example) get one character per event, this many ms apart |
+| `herdr_paste` | `true` | In Herdr, vox asks Herdr itself to paste into the focused terminal (`herdr-app do terminal.paste`), without pressing Enter. The previous plain-text clipboard is put back afterwards. If it fails, vox types instead |
 | `paste_apps` | none | Apps (by name, e.g. `Microsoft Word`) that should get paste even when `insert` is `type` |
 | `restore_clipboard` | `false` | When pasting, put the previous clipboard back afterwards. Off by default because restoring it too early can make some apps, such as Chrome, paste nothing |
 | `start_sound` / `stop_sound` / `warn_sound` / `error_sound` | Tink / Pop / Funk / Basso | Paths to sound files |
